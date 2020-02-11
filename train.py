@@ -73,6 +73,8 @@ parser.add_argument('--pkl',        type=int,    default=1,     metavar='PKL',
 # label propagation params
 parser.add_argument('--k',          type=int,    default=20,    metavar='K',
                     help="top k in constructing the graph W")
+parser.add_argument('--beta', type = float, default = 0.001, metavar = 'BETA',
+                    help="regularization term")
 parser.add_argument('--sigma',      type=float,  default=0.25,  metavar='SIGMA',
                     help="sigma of graph computing parameter")
 parser.add_argument('--alpha',      type=float,  default=0.99,  metavar='ALPHA',

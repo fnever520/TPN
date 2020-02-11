@@ -10,6 +10,7 @@ class models(object):
         self.im_width, self.im_height, self.channels = list(map(int, args['x_dim'].split(',')))
         self.h_dim, self.z_dim = args['h_dim'], args['z_dim']
         self.args              = args
+        self.beta              = args['beta']
 
         # placeholders for data and label
         self.x      = tf.placeholder(tf.float32, [None, None, self.im_height, self.im_width, self.channels])
@@ -138,14 +139,28 @@ class models(object):
 
         # loss computation
         F = tf.nn.softmax(F)
-        
+        '''
+        k-means clustering
+        TODO:
+        get the mean of the support samples, and query samples, and use k-means clustering.
+        '''
+        # proto = tf.reduce_mean()
+
         y_one_hot   = tf.reshape(tf.one_hot(gt,depth=C),[Nu, -1])
         y_one_hot   = tf.concat([ys,y_one_hot], axis=0)
         
+        '''
+        cross entropy loss ---- 
+        TODO:
+        we can add regularization term here
+        '''
         ce_loss     = y_one_hot*tf.log(F+epsilon)
-        ce_loss     = tf.negative(ce_loss)
+        ce_loss     = tf.negative(ce_loss) 
         ce_loss     = tf.reduce_mean(tf.reduce_sum(ce_loss,1))
         
+        regularizer = tf.nn.l2_loss(W)
+        overall_loss = tf.reduce_mean(ce_loss + self.beta*regularizer)
+
         # only consider query examples acc
         F_un        = F[Ns:,:]
         acc         = tf.reduce_mean(tf.to_float(tf.equal(label[Ns:],tf.cast(gt,tf.int64))))
@@ -163,7 +178,7 @@ class models(object):
         
         topk_W  = tf.sparse_to_dense(full_indices, tf.shape(W), tf.reshape(values, [-1]), default_value=0., validate_indices=False)
         ind1    = (topk_W>0)|(tf.transpose(topk_W)>0) # union, k-nearest neighbor
-        ind2    = (topk_W>0)&(tf.transpose(topk_W)>0) # intersection, mutal k-nearest neighbor
+        ind2    = (topk_W>0)&(tf.transpose(topk_W)>0) # intersection, mutual k-nearest neighbor
         ind1    = tf.cast(ind1,tf.float32)
 
         topk_W  = ind1*W
